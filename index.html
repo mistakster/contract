@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Contract test</title>
+    <script src="contract.js"></script>
+</head>
+<body>
+    <div id="log"></div>
+    <script>
+
+var f1 = Contract(
+        function (a, b) {
+            return a * b;
+        }, {
+            // function must have 2 arguments
+            args: [{
+                min: 0,
+                max: 3
+            }, {
+                min: 0
+            }],
+            // result must not be greater than 15
+            result: [{
+                max: 15
+            }],
+            // custom logger
+            log: function (msg) {
+                var ele = document.getElementById("log"), p;
+                if (ele) {
+                    p = document.createElement("p");
+                    p.innerHTML = msg;
+                    ele.appendChild(p);
+                }
+            }
+        }
+    );
+
+f1(1,2);
+f1(4,2);
+f1(5,5,6,7);
+
+    </script>
+</body>
+</html>
