@@ -2,8 +2,54 @@
 
     var PHASE_IN = "in",
         PHASE_OUT = "out",
-        ARGUMENTS_LENGTH = "argumentsLength",
-        VALIDATORS = {
+        ARGUMENTS_LENGTH = "argumentsLength";
+
+    function extend(obj, opts) {
+        var name, copy;
+
+        for (name in opts) if (opts.hasOwnProperty(name)) {
+            copy = opts[name];
+            if (copy !== undefined) {
+                obj[name] = copy;
+            }
+        }
+
+        return obj;
+    }
+
+    function stringBuilder(phase, name, position) {
+        var s = [phase];
+        if (phase === PHASE_IN && name !== ARGUMENTS_LENGTH) {
+            s.push(position || 0)
+        }
+        s.push(name);
+        return s.join(".");
+    }
+
+    // конструктор для экземпляра контракта
+    var Contract = function (fn, opts) {
+        var o;
+        if (opts.validators) {
+            // дополним существующие валидаторы не удаляя остальные
+            o = extend({}, opts);
+            o.validators = extend(extend({}, this.validators), o.validators);
+        } else {
+            o = opts;
+        }
+        extend(this, o);
+
+        this.fn = fn;
+    };
+
+    extend(Contract.prototype, {
+        // список контрактов для аргументов функции
+        args: [],
+
+        // список контрактов для результата
+        result: [],
+
+        // набор готовых именованных валидаторов
+        validators: {
             "blank":        // пустая / непустая строка (Boolean)
                     function (constraint, value) {
                         value = ("" + value).length > 0; // convert to string and chech length
@@ -79,72 +125,53 @@
                         } catch (ex) {}
                         return ret;
                     }
-        };
+        },
 
+        log: function (msg) {
+            if (console && console.log) {
+                console.log(msg);
+            }
+        },
 
-    function log(msg) {
-        if (console && console.log) {
-            console.log(msg);
-        }
-    }
+        before: function () {
+            var opts = this.args;
+            if (opts.length && opts.length !== arguments.length) {
+                this.log(stringBuilder(PHASE_IN, ARGUMENTS_LENGTH, 0));
+            }
+            this.check(opts, arguments, PHASE_IN);
+        },
 
-    function stringBuilder(phase, name, position) {
-        var s = [phase];
-        if (phase === PHASE_IN && name !== ARGUMENTS_LENGTH) {
-            s.push(position || 0)
-        }
-        s.push(name);
-        return s.join(".");
-    }
+        after: function () {
+            this.check(this.result, arguments, PHASE_OUT);
+        },
 
-    function check(opts, validators, data, phase, log) {
-        var i, name, contracts;
-        for (i = 0; i < data.length; i++) {
-            if (opts[i]) {
-                contracts = opts[i];
-                for (name in contracts) if (contracts.hasOwnProperty(name) && validators.hasOwnProperty(name)) {
-                    if (!validators[name](contracts[name], data[i])) {
-                        log(stringBuilder(phase, name, i));
+        check: function (opts, data, phase) {
+            var i, name, contracts;
+            for (i = 0; i < data.length; i++) {
+                if (opts[i]) {
+                    contracts = opts[i];
+                    for (name in contracts) if (contracts.hasOwnProperty(name) && this.validators.hasOwnProperty(name)) {
+                        if (!this.validators[name](contracts[name], data[i])) {
+                            this.log(stringBuilder(phase, name, i));
+                        }
                     }
                 }
             }
         }
-    }
 
-    function before() {
-        var opts = this.args;
-        if (opts.length && opts.length !== arguments.length) {
-            this.log(stringBuilder(PHASE_IN, ARGUMENTS_LENGTH, 0));
-        }
-        check(opts, this.validators, arguments, PHASE_IN, this.log);
-    }
 
-    function after() {
-        check(this.result, this.validators, arguments, PHASE_OUT, this.log);
-    }
+    });
 
-    function extend(obj, opts) {
-        var name, copy;
-
-        for (name in opts) {
-            copy = opts[name];
-            if (copy !== undefined) {
-                obj[name] = copy;
-            }
-        }
-
-        return obj;
-    }
 
     window['Contract'] = function (fn, opts) {
 
-        var local = extend({validators: VALIDATORS, log: log, args: [], result: []}, opts);
+        var contract = new Contract(fn, opts);
 
         return function () {
             var result;
-            before.apply(local, arguments);
-            result = fn.apply(this, arguments);
-            after.call(local, result);
+            contract.before.apply(contract, arguments);
+            result = contract.fn.apply(this, arguments);
+            contract.after.call(contract, result);
             return result;
         };
     };
