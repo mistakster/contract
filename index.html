@@ -2,44 +2,22 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>Contract test</title>
+    <title>Programming by Contract test suite</title>
+    <!-- jQuery -->
+    <script src="http://yandex.st/jquery/1.4.4/jquery.min.js"></script>
+    <!-- QUnit testing suite -->
+    <link href="https://github.com/jquery/qunit/raw/master/qunit/qunit.css" rel="stylesheet" type="text/css" />
+    <script src="https://github.com/jquery/qunit/raw/master/qunit/qunit.js"></script>
+    <!-- Contract framework -->
     <script src="contract.js"></script>
+    <script src="contract-tests.js"></script>
 </head>
 <body>
-    <div id="log"></div>
-    <script>
-
-var f1 = Contract(
-        function (a, b) {
-            return a * b;
-        }, {
-            // function must have 2 arguments
-            args: [{
-                min: 0,
-                max: 3
-            }, {
-                min: 0
-            }],
-            // result must not be greater than 15
-            result: [{
-                max: 15
-            }],
-            // custom logger
-            log: function (msg) {
-                var ele = document.getElementById("log"), p;
-                if (ele) {
-                    p = document.createElement("p");
-                    p.innerHTML = msg;
-                    ele.appendChild(p);
-                }
-            }
-        }
-    );
-
-f1(1,2);
-f1(4,2);
-f1(5,5,6,7);
-
-    </script>
+    <h1 id="qunit-header">&ldquo;Programming by Contract&rdquo; test suite</h1>
+    <h2 id="qunit-banner"></h2>
+    <div id="qunit-testrunner-toolbar"></div>
+    <h2 id="qunit-userAgent"></h2>
+    <ol id="qunit-tests"></ol>
+    <div id="qunit-fixture">test markup</div>
 </body>
 </html>
