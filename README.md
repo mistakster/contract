@@ -6,7 +6,7 @@ JS библиотека для отладки и контроля аргумен
 Использование
 -------------
 
-var f = Contract(functionToTest, {
+    var f = Contract(functionToTest, {
         args: {},
         result: {},
         log: function () {},
