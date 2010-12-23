@@ -1,3 +1,9 @@
+/**
+ * Programming by Contract
+ *
+ * @author  mista_k
+ * @version 0.1
+ */
 (function (window, undefined) {
 
     var PHASE_IN = "in",
@@ -27,21 +33,21 @@
     }
 
     // конструктор для экземпляра контракта
-    var Contract = function (fn, opts) {
+    var ContractProxy = function (fn, opts) {
         var o;
-        if (opts.validators) {
+        if (opts && opts.validators) {
             // дополним существующие валидаторы не удаляя остальные
             o = extend({}, opts);
             o.validators = extend(extend({}, this.validators), o.validators);
         } else {
             o = opts;
         }
-        extend(this, o);
+        extend(this, o || {});
 
         this.fn = fn;
     };
 
-    extend(Contract.prototype, {
+    extend(ContractProxy.prototype, {
         // список контрактов для аргументов функции
         args: [],
 
@@ -162,10 +168,14 @@
 
     });
 
+    /**
+     * Обертка для декларации контракта
+     * @param fn    {Function}  функция, которая будет проверятся на соответствии контракту
+     * @param opts  {Object}    не обязательные параметры, описывающие контракт
+     */
+    window.Contract = function (fn, opts) {
 
-    window['Contract'] = function (fn, opts) {
-
-        var contract = new Contract(fn, opts);
+        var contract = new ContractProxy(fn, opts);
 
         return function () {
             var result;
@@ -175,5 +185,7 @@
             return result;
         };
     };
+
+    window.ContractProxy = ContractProxy;
 
 }(window));
